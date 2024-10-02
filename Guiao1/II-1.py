@@ -1,97 +1,115 @@
-# 1. Dada uma lista, retornar o elemento que está
-# à cabeça (ou seja, na posição 0).
-def head_element(lst):
-    return lst[0]
+from operator import truediv
 
-# 2. Dada uma lista, retornar a sua cauda (ou seja,
-# todos os elementos à exceção do primeiro).
-def get_tail(lst):
-    tail = []
-    for i in lst[1:]:       # lst[1:] obter todos os elementos a partir do índice 1 até o final
-        tail.append(i)      # lst[start:end:step]
-    return tail
 
-# 3. Dado um par de listas com igual comprimento,
-# produzir uma lista dos pares dos elementos homólogos
-def homologous_list(lst1, lst2):
-    result = []
-    for i in range(len(lst1)):
-        result.append((lst1[i], lst2[i]))
-    return result
+# 1. Dada uma lista, retorna o seu comprimento
+def comprimento(lst):
+    if not lst:
+        return 0
+    return 1 + comprimento(lst[1:])
 
-# 4. Dada uma lista de números, retorna o menor elemento.
-def lowest_element(lst):
-    for i in range(1, len(lst)):
-       if lst[i] < lst[0]:      # lst[0] vai armazenar o menor valor
-           lst[0] = lst[i]
-    return lst[0]
+# 2. Dada uma lista de números, retorna a respetiva soma.
+def soma(lst):
+    if not lst:
+        return 0
+    return lst[0] + soma(lst[1:])
 
-# 5. Dada uma lista de números, retorna um par formado pelo menor elemento
-# e pela lista dos restantes elementos.
-def pair_lowest_list(lst):
-    min_value = min(lst)
-    new_lst = lst.copy()
-    new_lst.remove(min_value)
-    return min_value, new_lst
+#3. Dada uma lista e um elemento, verifica se o elemento
+# ocorre na lista. Retorna um valor booleano.
+def existe(color, colors):
+    if not colors:
+        return False
+    if colors[0] == color:
+        return True
+    return existe(colors[1:])
 
-# 6. Dada uma lista de números, calcular o máximo e o mínimo,
-# retornando-os num tuplo
-def max_min(lst):
-    result = []
-    max_value = max(lst)
-    min_value = min(lst)
-    result.append((max_value, min_value))
-    return result
+# 4. Dadas duas listas, retorna a sua concatenação.
+def concat(lst1, lst2):
+    if not lst1:
+        return lst2
+    return [lst1[0]] + concat(lst1[1:], lst2)
 
-# 7. Dada uma lista de números, retorna um triplo formado pelos
-# dois menores elementos e pela lista dos restantes elementos.
-def min_min_list(lst):
-    min1 = float('inf')
-    min2 = float('inf')
-    for number in lst:
-        if number < min1:
-            min2 = min1     # atualiza o segundo menor
-            min1 = number   # atualiza o menor
-        elif number < min2 and number != min1:  # caso number seja menor que min2
-            min2 = number                       # e diferente de min1
-    new_lst = [x for x in lst if x != min1 and x != min2]
-    return min1, min2, new_lst
+# 5. Dada uma lista, retorna a sua inversa.
+def inverte(lst):
+    if not lst:
+        return []
+    return [lst[-1]] + inverte(lst[:-1])
 
-'''
-    min_value = min(lst)
-    lst.remove(min_value)
-    second_min_value = min(lst)
-    lst.remove(second_min_value)
-    return min_value, second_min_value, lst
-'''
+# 6. Dada uma lista, verifica se forma uma capicua, ou seja,
+# se, quer se leia da esquerda para a direita ou vice-versa,
+# se obtêmm a mesma sequência de elementos.
+def capicua(lst):
+    if len(lst) <= 1:
+        return True
+    if lst[0] == lst[-1]:
+        return capicua(lst[1:-1])
+    else:
+        return False
 
-# 8. Dada uma lista ordenada de números, calcular se possível a respectiva
-# média e mediana, retornando-as num tuplo.
-def mean_median(lst):
-    soma = 0
-    count = len(lst)
-    median = 0
-    lst.sort()
-    for number in lst:
-        soma += number
-        if count % 2 == 0:
-            mid_index = count // 2 - 1      # representa o primeiro elemento do meio.
-            mid_index2 = count // 2         #  representa o segundo elemento do meio.
-            median =  (lst[mid_index] + lst[mid_index2]) / 2 # média dos 2 elementos
-        elif count % 2 != 0:
-            mid_index = count // 2        # count//2, arredona o numero
-            median = lst[mid_index]
-    return soma/count, median
+# 7. Dada uma lista de listas, retorna a concatenação dessas listas.
+def concat_listas(lst1, lst2):
+    if not lst1:
+        return lst2
+    return [lst1[0]] +  concat_listas(lst1[1:], lst2)
 
-numbers = [1, 10, 100, 1000]
-numbers2 = [1, 0.1, 0.01, 0.001]
-numbers3 = [8, 6, 10, 7, 11, 9]
+# 8. Dada uma lista, um elemento x e outro elemento y, retorna uma
+# lista similar à lista de entrada, na qual x é substituido por y
+# em todas as ocorrências de x.
+def substitui(x, y, lst):
+    if not lst:
+        return []
+    if lst[0] == x:
+        return [y] + substitui(x, y, lst[1:])
+    else:
+        return [lst[0]] + substitui(x, y, lst[1:])
 
-print("1. " + str(head_element(numbers)))
-print("2. " + str(get_tail(numbers)))
-print("3. " + str(homologous_list(numbers, numbers2)))
-print("4. " + str(lowest_element(numbers)))
-print("5. " + str(pair_lowest_list(numbers3)))
-print("6. " + str(max_min(numbers2)))
-print("7. " + str(min_min_list(numbers3)))
-print("8. " + str(mean_median(numbers3)))
+
+
+# 9. Dadas duas listas ordenadas de números, calcular a união
+# ordenada mantendo eventuais repetições.
+def fusao_ordenada(lst1, lst2):
+    if not lst1:
+        return lst2
+    if not lst2:
+        return lst1
+    if lst1[0] <= lst2[0]:
+        return [lst1[0]] + fusao_ordenada(lst1[1:], lst2)
+    if lst2[0] <= lst1[0]:
+        return [lst2[0]] + fusao_ordenada(lst1, lst2[1:])
+
+# 10. Dado um conjunto, na forma de uma lista, retorna uma lista
+# de listas que representa o conjunto de todos os subconjuntos
+# do conjunto dado.
+def generate_subsets(original_set):
+    if not original_set:
+        return [[]]
+    first_element = original_set[0]
+    subsets_without_first = generate_subsets(original_set[1:])
+    subsets_with_first = [[first_element] + subset for subset in subsets_without_first]
+    return subsets_without_first + subsets_with_first
+
+
+colors = ["Green", "Red", "Blue", "Yellow", "Purple"]
+numbers = [2, 5, 9, 15, 22]
+more_numbers = [3, 5, 10, 22]
+set = [1, 2, 3]
+matriz = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+]
+bob = [
+    ["b", "o", "b"],
+    ["o", "b", "o"],
+    ["b", "o", "b"],
+]
+
+print("1. " + str(comprimento(colors)))
+print("2. " + str(soma(numbers)))
+print("3. " + str(existe("Green", colors)))
+print("4. " + str(concat(colors, numbers)))
+print("5. " + str(inverte(colors)))
+print("6. " + str(capicua(numbers)))
+print("7. " + str(concat_listas(matriz, bob)))
+print("8. " + str(substitui("Red", "Green", colors)))
+print("9. " + str(fusao_ordenada(numbers, more_numbers)))
+print("10. " + str(generate_subsets(set)))

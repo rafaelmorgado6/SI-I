@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # Module: tree_search
 #
 # This module provides a set o classes for automated

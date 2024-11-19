@@ -1,3 +1,3 @@
 # SI-I
 
-Sistemas inteligentes I
+Sistemas Inteligentes I

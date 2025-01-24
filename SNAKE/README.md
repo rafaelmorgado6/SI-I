@@ -3,7 +3,10 @@ Snakes clone for AI teaching
 
 # Captura de Tela do Jogo
 
-<img src="game_screenshot.png" alt="Captura de Tela do Jogo" width="750"/>
+<div align="center">
+  <img src="game_screenshot.png" alt="Captura de Tela do Jogo" width="600"/>
+</div>
+
 
 
 

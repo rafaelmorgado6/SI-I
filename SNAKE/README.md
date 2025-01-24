@@ -52,7 +52,7 @@ Make sure pygame is properly installed:
 
 ## Project Structure
 snake-ai\ 
-├── agent.py # Contains the intelligent agent logic\
+\├── agent.py # Contains the intelligent agent logic\
 ├── student.py # Client script for AI-controlled snake\
 ├── client.py # Client script for manual control\
 ├── server.py # Game server (single-player or multiplayer)\

@@ -1,5 +1,8 @@
-# ia-snakes
+# SI-I - SNAKE
 Snakes clone for AI teaching
+
+![Captura de Tela do Jogo](game_screenshot.png)
+
 
 ## How to install
 

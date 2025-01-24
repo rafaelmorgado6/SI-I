@@ -1,14 +1,9 @@
 # SI-I - SNAKE
 Snakes clone for AI teaching
 
-# Captura de Tela do Jogo
-
 <div align="center">
   <img src="game_screenshot.png" alt="Captura de Tela do Jogo" width="600"/>
 </div>
-
-
-
 
 ## How to install
 

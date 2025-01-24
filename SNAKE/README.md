@@ -1,5 +1,5 @@
 # SI-I - SNAKE
-Snakes clone for AI teaching
+Development of an autonomous agent for the game SNAKE
 
 <div align="center">
   <img src="game_screenshot.png" alt="Captura de Tela do Jogo" width="600"/>

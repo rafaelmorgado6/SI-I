@@ -1,0 +1,244 @@
+# Rafael Morgado 104277
+
+class Agent:
+    OPPOSITE_DIRECTION = {'w': 's', 's': 'w', 'a': 'd', 'd': 'a'}
+
+    def __init__(self, map, size, head):
+        self.map = map
+        self.size = size
+        self.head = head
+        self.curr_direction = 'd'  # Começa movendo para a direita como padrão
+        self.path = []  # Para armazenar o percurso padrão
+        self.last_traverse = True  # Estado inicial padrão do `traverse`
+  
+    def solve(self, state):
+
+        print("Estado recebido:", state)  # Adicione este print para depuração
+        
+        if 'body' in state and state['body']:
+            self.head = tuple(state['body'][0])
+        else:
+            print("Error: 'body' not found")
+            return ['d']
+
+        body = set(tuple(i) for i in state.get('body', []))
+        sight_range = state.get('range', 3)
+        is_traverse = state.get('traverse', True)
+
+        food_list = [
+            (int(x), int(y))
+            for x, cols in state['sight'].items()
+            for y, tile in cols.items()
+            if tile == 2  # Filtra pelos tiles de alimentos ruins
+        ]        
+        
+        # Identifica as bad foods (SUPER)
+        bad_food_list = [
+            (int(x), int(y))
+            for x, cols in state['sight'].items()
+            for y, tile in cols.items()
+            if tile == 3  # Filtra pelos tiles representando SUPER food (valor 3)
+        ]
+       
+        visible_food = [
+            (fx, fy ) for fx, fy in food_list
+            if (min(abs(fx - self.head[0]), self.size[0] - abs(fx - self.head[0])) 
+                + min(abs(fy - self.head[1]), self.size[1] - abs(fy - self.head[1]))) <= sight_range
+        ]
+
+        if not visible_food:
+            self.wander(sight_range, is_traverse, body, bad_food_list)  # Passa o corpo atual para o wander
+            if self.path:
+                move = self.path.pop(0)
+                next_head = self.calculate_next_head(self.head, move)
+                if not self.is_safe_move(next_head, body, bad_food_list):
+                    
+                    if self.curr_direction == 'a' or self.curr_direction == 'd':
+                        move = 'w'  
+                        next_head = self.calculate_next_head(self.head, move)
+                        if not self.is_safe_move(next_head, body, bad_food_list):
+                            if self.curr_direction == 'a' or self.curr_direction == 'd':
+                                move = 's'  
+                    else:
+                        move = 'd'
+                        next_head = self.calculate_next_head(self.head, move)
+                        if not self.is_safe_move(next_head, body, bad_food_list):
+                            if self.curr_direction == 'w' or self.curr_direction == 's':
+                                move = 'a' 
+                
+                self.curr_direction = move
+                return [move]
+            else:
+                return ['d']
+
+        next_move = self.tree_search(depth=10, head=self.head, body=body, food=visible_food)
+        if next_move:
+            self.curr_direction = next_move
+        return [next_move]
+
+    def calculate_next_head(self, head, direction):
+        x, y = head
+        if direction == 'w': y -= 1
+        if direction == 's': y += 1
+        if direction == 'a': x -= 1
+        if direction == 'd': x += 1
+        x %= self.size[0]
+        y %= self.size[1]
+        return (x, y)
+
+    def is_safe_move(self, next_head, body, bad_food_list):
+        if next_head in body or next_head in bad_food_list:
+            return False
+
+        # Verificar se o movimento é oposto à direção atual
+        opposite_direction = self.OPPOSITE_DIRECTION[self.curr_direction]
+        if self.calculate_next_head(self.head, opposite_direction) == next_head:
+            return False
+
+        return True
+
+    def wander(self, sight_range, is_traverse, body, bad_food_list):
+        """Gera um movimento padrão em zigue-zague cobrindo o mapa, respeitando colisões e evitando movimentos opostos."""
+        snake_size = len(body)
+        if snake_size < 48:
+            horizontal_mov = self.size[0] - 2
+        else:
+            horizontal_mov = self.size[0] - 2
+        
+        if not self.path:  # Apenas gera um novo caminho se o atual estiver vazio
+            current_head = self.head  # Começa da posição atual da cabeça
+            current_body = set(body)  # Corpo atual da cobra
+
+            for y in range(sight_range):  # Limita o número de linhas exploradas a `sight_range`
+                
+                # Decide a direção horizontal para o zigue-zague
+                direction = 'd' #if y % 2 == 0 else 'a'
+                
+                for _ in range(horizontal_mov):  # Movimenta horizontalmente
+                    next_head = self.calculate_next_head(current_head, direction)
+                    
+                    if self.is_safe_move(next_head, current_body, bad_food_list):
+                        self.path.append(direction)
+                        current_body.remove(current_head)  # Remove a posição anterior do corpo
+                        current_body.add(next_head)  # Adiciona a nova cabeça
+                        current_head = next_head  # Atualiza a posição da cabeça
+                    else:
+                        direction = 's' #if direction != 'w' else 'w'
+                        break
+
+                # Adiciona descidas controladas
+                for _ in range( 2 * sight_range - 1):  # Faz descidas controladas
+                    next_head = self.calculate_next_head(current_head, 's')
+                    
+                    if self.is_safe_move(next_head, current_body,bad_food_list):
+                        self.path.append('s')
+                        current_body.remove(current_head)  # Remove a posição anterior do corpo
+                        current_body.add(next_head)  # Adiciona a nova cabeça
+                        current_head = next_head
+                    else:
+                        direction = 'a' #if direction != 'd' else 'd'
+                        break
+
+            
+            if not is_traverse:
+                # Se `traverse` for False, sobe em vez de descer
+                self.path = self.path[::-1]  # Inverte o caminho gerado
+
+            
+
+
+
+
+#TODO######################### Tree Search ############################################################
+
+    def tree_search(self, depth, head, body, food):
+        
+        # Se houver food na sight retorna o caminho
+        def heuristic(state):
+            head, body, food = state
+
+            if food:
+                # identifica o alimento mais proximo
+                closest_food = min(food, key=lambda f: abs(f[0] - head[0]) + abs(f[1] - head[1]))
+                # Calcula a distância
+                distance = abs(closest_food[0] - head[0]) + abs(closest_food[1] - head[1])
+                return -distance # negativo pois um valor menor indica um estado mais "desejável".
+            return 0
+
+        # calcula next state com base num move da snake
+        def expand_state(head, body, food, direction):
+            next_x, next_y = head
+
+            # atualiza head com base na direction
+            if direction == 'w': next_y -= 1
+            if direction == 's': next_y += 1
+            if direction == 'a': next_x -= 1
+            if direction == 'd': next_x += 1
+
+            # ajusta para mapa esferico
+            next_x %= self.size[0]
+            next_y %= self.size[1]
+
+            if (next_x, next_y) in body:
+                return None # estado inválido
+
+            # atualiza o corpo da cobra
+            new_body = list(body)
+            new_body.insert(0, (next_x, next_y))    # (next_x, next_y) é inserida no início da lista.
+            new_body.pop() # remove ultima posição (cauda)
+
+            # verifica se o proximo move aumenta/diminuia a distancia à food
+            if food:
+                closest_food = min(food, key=lambda f: abs(f[0] - head[0]) + abs(f[1] - head[1]))
+                dist_before = abs(head[0] - closest_food[0]) + abs(head[1] - closest_food[1])
+                dist_after = abs(next_x - closest_food[0]) + abs(next_y - closest_food[1])
+
+                if dist_after > dist_before:
+                    return None  # Evita movimentos que aumentam a distância
+
+            # atualiza lista de foods
+            new_food_list = [f for f in food if (f[0], f[1]) != (next_x, next_y)]
+
+            # retorna o novo estado
+            return (next_x, next_y), set(new_body), new_food_list
+
+        def search(node, depth):
+            
+            # devolve a pontuação do estado e None pois é o final da recursão.
+            if depth == 0:
+                return heuristic(node), None 
+
+            # extrai os conponentes do estado atual
+            head, body, food = node
+
+            # Inicializa o melhor movimento
+            best_score = float('-inf')
+            best_move = None
+
+            # Define o movimento oposto à direção atual
+            opposite_direction = {'w': 's', 's': 'w', 'a': 'd', 'd': 'a'}[self.curr_direction]
+            
+            for direction in ['w', 'a', 's', 'd']:
+                
+                # Ignora movimentos opostos à direction atual
+                if direction == opposite_direction:
+                    continue # interrompe a iteração atual e pula para a próxima.
+
+                # expand_state -> (next_x,next_y),new_body,new_food_list
+                next_state = expand_state(head, body, food, direction) 
+
+                # Chama recursivamente para o próximo estado
+                if next_state:
+                    score, _ = search(next_state, depth - 1)
+                    
+                    # atualiza a melhor pontuação e direção
+                    if score > best_score:
+                        best_score = score
+                        best_move = direction
+
+            return best_score, best_move
+
+        _, best_move = search((head, body, food), depth)
+
+        # retorna best_move se existir senao devolve 'd'(padrao)
+        return best_move if best_move else 'd'

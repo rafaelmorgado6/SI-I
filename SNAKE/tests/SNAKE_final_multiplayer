@@ -1,0 +1,246 @@
+# Rafael Morgado - 104277
+
+class Agent:
+    OPPOSITE_DIRECTION = {'w': 's', 's': 'w', 'a': 'd', 'd': 'a'}
+
+    def __init__(self, map, size, head):
+        self.map = map
+        self.size = size
+        self.head = head
+        self.curr_direction = 'd'
+        self.path = []  
+        self.last_traverse = True  
+  
+
+    def solve(self, state):
+        if 'players' in state:
+            num_players = len(state['players'])
+            #print(num_players)
+        else:
+            print('NO PLAYERS')
+
+        #print("Estado recebido:", state)  # Adicione este print para depuração
+        
+        if 'body' in state and state['body']:
+            self.head = tuple(state['body'][0])
+        else:
+            return ['d']
+
+        body = set(tuple(i) for i in state.get('body', []))
+        sight_range = state.get('range', 3)
+        is_traverse = state.get('traverse', True)
+        other_snake_positions = self.get_other_snake_positions(state, body)
+
+        food_list = [
+            (int(x), int(y))
+            for x, cols in state['sight'].items()
+            for y, cel in cols.items()
+            if cel == 2  # 2 -> food
+        ]        
+        
+        bad_food_list = [
+            (int(x), int(y))
+            for x, cols in state['sight'].items()
+            for y, cel in cols.items()
+            if cel == 3  # 3 -> superfood/poisons
+        ]
+       
+        visible_food = [
+            (fx, fy ) for fx, fy in food_list
+            if (min(abs(fx - self.head[0]), self.size[0] - abs(fx - self.head[0])) 
+                + min(abs(fy - self.head[1]), self.size[1] - abs(fy - self.head[1]))) <= sight_range
+        ]
+
+        if not visible_food:
+            self.wander(sight_range, is_traverse, body, bad_food_list, num_players, other_snake_positions)  # Passa o corpo atual para o wander
+            if self.path:
+                move = self.path.pop(0)
+                next_head = self.calculate_next_head(self.head, move)
+                if not self.is_safe_move(next_head, body, bad_food_list, num_players, other_snake_positions):
+                    
+                    if self.curr_direction == 'a' or self.curr_direction == 'd':
+                        move = 's'  
+                        next_head = self.calculate_next_head(self.head, move)
+                        if not self.is_safe_move(next_head, body, bad_food_list, num_players, other_snake_positions):
+                            if self.curr_direction == 'a' or self.curr_direction == 'd':
+                                move = 'w'  
+                    else:
+                        move = 'd'
+                        next_head = self.calculate_next_head(self.head, move)
+                        if not self.is_safe_move(next_head, body, bad_food_list, num_players, other_snake_positions):
+                            if self.curr_direction == 'w' or self.curr_direction == 's':
+                                move = 'a' 
+                
+                self.curr_direction = move
+                return [move]
+            else:
+                return ['d']
+
+        next_move = self.tree_search(depth=10, head=self.head, body=body, food=visible_food, bad_food_list=bad_food_list)
+        
+        if next_move:
+            self.curr_direction = next_move
+        return [next_move]
+
+
+    def calculate_next_head(self, head, direction):
+        x, y = head
+
+        if direction == 'w': y -= 1
+        if direction == 's': y += 1
+        if direction == 'a': x -= 1
+        if direction == 'd': x += 1
+
+        x %= self.size[0]
+        y %= self.size[1]
+
+        return (x, y)
+
+
+    def is_safe_move(self, next_head, body, bad_food_list, num_players, other_snake_positions):
+        if num_players == 1:
+            other_snake_positions = []
+        
+        if next_head in body or next_head in bad_food_list:
+            return False
+        
+        if num_players > 1 and next_head in other_snake_positions:
+            return False
+
+        opposite_direction = self.OPPOSITE_DIRECTION[self.curr_direction]
+        if self.calculate_next_head(self.head, opposite_direction) == next_head:
+            return False
+
+        return True
+
+    
+    def get_other_snake_positions(self, state, body):
+
+        my_body = body
+        other_snakes_positions = set()
+
+        for row, cols in state.get("sight", {}).items():
+            for col, value in cols.items():
+                if value == 4: 
+                    position = (int(row), int(col))
+                    
+                    if position not in my_body:  
+                        other_snakes_positions.add(position)
+
+        return other_snakes_positions
+        
+
+    def wander(self, sight_range, is_traverse, body, bad_food_list, num_players, other_snake_positions):
+        
+        if not self.path:
+            current_head = self.head
+            current_body = set(body)
+
+            for y in range(sight_range):
+                
+                direction = 'd'
+                
+                for _ in range(self.size[0] - 2): 
+                    next_head = self.calculate_next_head(current_head, direction)
+                    
+                    if self.is_safe_move(next_head, current_body, bad_food_list, num_players, other_snake_positions):
+                        self.path.append(direction)
+                        current_body.remove(current_head)  
+                        current_body.add(next_head)  
+                        current_head = next_head  
+                    else:
+                        direction = 's' 
+                        break
+
+                for _ in range( 2 * sight_range - 1): 
+                    next_head = self.calculate_next_head(current_head, 's')
+                    
+                    if self.is_safe_move(next_head, current_body,bad_food_list, num_players, other_snake_positions):
+                        self.path.append('s')
+                        current_body.remove(current_head) 
+                        current_body.add(next_head)  
+                        current_head = next_head
+                    else:
+                        direction = 'd' 
+                        break
+
+            if not is_traverse:
+                self.path = self.path[::-1]
+
+
+    def tree_search(self, depth, head, body, food, bad_food_list):
+        
+        def heuristic(state):
+            head, body, food = state
+
+            if food:
+
+                closest_food = min(food, key=lambda f: abs(f[0] - head[0]) + abs(f[1] - head[1]))
+                distance = abs(closest_food[0] - head[0]) + abs(closest_food[1] - head[1])
+                
+                return -distance
+            return 0
+
+    
+        def expand_state(head, body, food, direction, bad_food_list):
+            next_x, next_y = head
+
+            if direction == 'w': next_y -= 1
+            if direction == 's': next_y += 1
+            if direction == 'a': next_x -= 1
+            if direction == 'd': next_x += 1
+
+            next_x %= self.size[0]
+            next_y %= self.size[1]
+
+            if (next_x, next_y) in body or (next_x, next_y) in bad_food_list:
+                return None 
+
+            new_body = list(body)
+            new_body.insert(0, (next_x, next_y)) 
+            new_body.pop() 
+
+            if food:
+                closest_food = min(food, key=lambda f: abs(f[0] - head[0]) + abs(f[1] - head[1]))
+                previous_dist = abs(head[0] - closest_food[0]) + abs(head[1] - closest_food[1])
+                next_dist = abs(next_x - closest_food[0]) + abs(next_y - closest_food[1])
+
+                if next_dist > previous_dist:
+                    return None
+
+            new_food_list = [f for f in food if (f[0], f[1]) != (next_x, next_y)]
+
+            return (next_x, next_y), set(new_body), new_food_list
+
+
+        def search(node, depth, bad_food_list):
+            
+            if depth == 0:
+                return heuristic(node), None 
+
+            head, body, food = node
+
+            best_score = float('-inf')
+            best_move = None
+
+            opposite_direction = {'w': 's', 's': 'w', 'a': 'd', 'd': 'a'}[self.curr_direction]
+            
+            for direction in ['w', 'a', 's', 'd']:
+                
+                if direction == opposite_direction:
+                    continue
+
+                next_state = expand_state(head, body, food, direction, bad_food_list) 
+
+                if next_state:
+                    score, _ = search(next_state, depth - 1, bad_food_list)
+                    
+                    if score > best_score:
+                        best_score = score
+                        best_move = direction
+
+            return best_score, best_move
+
+        _, best_move = search((head, body, food), depth, bad_food_list)
+
+        return best_move if best_move else 'd'

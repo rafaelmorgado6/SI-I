@@ -13,17 +13,36 @@ Make sure you are running Python 3.11.
 
 Open 3 terminals:
 
+### **Single Player**
+Run the server in single-player mode:
 `$ python3 server.py`
 
+Run the viewer:
 `$ python3 viewer.py`
 
-`$ python3 client.py`
+Run the client (user plays manually) or the AI agent (AI plays for the user):
+- **To play manually**: `$ python3 client.py`  
+  - Use the **arrow keys** to control the snake.
+- **To use the AI agent**: `$ python3 student.py`  
+  - The AI will control the snake automatically.
 
-To play using the sample client, make sure the client pygame hidden window has focus.
+### **Multiplayer**
+Run the server in multiplayer mode with 2 players:
+`$ python3 server.py --players 2`
+
+Run the viewer:
+`$ python3 viewer.py`
+
+Run two instances of the client (or a combination of client and AI agent):
+- Example:
+  - Terminal 1: `$ python3 client.py` (manual control).
+  - Terminal 2: `$ python3 student.py` (AI plays for the second player).
+
+*Note*: In multiplayer mode, you must run one instance of the game for each snake.
 
 ### Keys
 
-- **Directions:** Arrows
+- **Directions (manual play):** Arrow keys
 
 ## Debug Installation
 
@@ -32,11 +51,21 @@ Make sure pygame is properly installed:
 `python -m pygame.examples.aliens`
 
 ## Project Structure
+snake-ai/ 
+├── agent.py # Contains the intelligent agent logic 
+├── student.py # Client script for AI-controlled snake 
+├── client.py # Client script for manual control 
+├── server.py # Game server (single-player or multiplayer) 
+├── viewer.py # Visual interface for observing the game 
+├── game/ # Game logic and mechanics 
+├── README.md # Project documentation 
+└── requirements.txt # Python dependencies
+
 
 ## How it works
 
 1. **Agent Decision Logic**:
-   - The agent analyzes the game state provided by the server.
+   - The agent (`student.py`) analyzes the game state provided by the server.
    - Uses `tree_search` to explore possible moves and selects the best one based on a heuristic:
      - Proximity to food.
      - Safety (avoiding collisions and venoms).
@@ -49,8 +78,8 @@ Make sure pygame is properly installed:
    - `is_safe_move(...)`: Ensures that moves avoid collisions and hazards.
 
 3. **Client-Server Interaction**:
-   - The `student.py` script manages communication with the server.
-   - The server provides the game state, and the agent responds with a movement command.
+   - The `student.py` or `client.py` script connects to the server.
+   - The server provides the game state, and the script sends back a movement command (from the user or the AI).
 
 ## Algorithms
 
@@ -69,9 +98,7 @@ Make sure pygame is properly installed:
 ## Future Improvements
 
 - Implement **A*** for more efficient pathfinding.
-- Add support for multiplayer scenarios (handling other snakes).
 - Optimize performance by reducing unnecessary recalculations in `wander`.
 - Use machine learning techniques like reinforcement learning for adaptive behavior.
 
-# Tested on:
-- MacOS 15.0.1
+

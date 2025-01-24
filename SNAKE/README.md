@@ -51,7 +51,7 @@ Make sure pygame is properly installed:
 `python -m pygame.examples.aliens`
 
 ## Project Structure
-snake-ai/ 
+'''snake-ai/ 
 ├── agent.py # Contains the intelligent agent logic 
 ├── student.py # Client script for AI-controlled snake 
 ├── client.py # Client script for manual control 
@@ -59,7 +59,7 @@ snake-ai/
 ├── viewer.py # Visual interface for observing the game 
 ├── game/ # Game logic and mechanics 
 ├── README.md # Project documentation 
-└── requirements.txt # Python dependencies
+└── requirements.txt # Python dependencies'''
 
 
 ## How it works
